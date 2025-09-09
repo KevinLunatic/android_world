@@ -91,7 +91,9 @@ ENV PATH="$PATH:/root/.local/bin"
 #=========================
 # Copying Scripts to root
 #=========================
-COPY . /
+# 将代码复制到子目录中，方便启动容器的时候挂载工作目录覆盖原有代码
+WORKDIR /aw
+COPY . /aw
 
 RUN chmod a+x docker_setup/start_emu.sh && \
     chmod a+x docker_setup/start_emu_headless.sh && \

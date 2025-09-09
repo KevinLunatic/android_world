@@ -1,0 +1,16 @@
+services:
+  android_world:
+    image: android_world:easy  # 使用指定的镜像
+    privileged: true  # 对应 --privileged，给予容器特权
+    ports:
+      - "5000:5000"  # 对应 -p 5000:5000，映射端口
+    stdin_open: true  # 对应 -i，保持 stdin 打开
+    tty: true  # 对应 -t，分配伪 TTY
+    volumes:
+      - /home/ubuntu/liwenkai/android_world:/aw  # 挂载卷：主机目录到容器 /aw，覆盖代码
+    environment:
+      - HTTP_PROXY=http://host.docker.internal:7890
+      - HTTPS_PROXY=http://host.docker.internal:7890
+      - NO_PROXY=localhost,127.0.0.1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Linux 环境需要
