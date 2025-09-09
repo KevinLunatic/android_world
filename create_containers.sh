@@ -3,11 +3,11 @@
 # 基础镜像和配置
 IMAGE="android_world:easy"
 BASE_PORT=5000
-NUM_CONTAINERS=75
+NUM_CONTAINERS=10
 MAX_RETRIES=5
 CHECK_INTERVAL=30  # 检查间隔（秒）
 SUCCESS_TIMEOUT=600  # 成功超时时间（秒，10分钟）
-PARALLEL_JOBS=40  # 并行作业数
+PARALLEL_JOBS=10  # 并行作业数
 
 # 启动单个容器的函数
 start_single_container() {
@@ -34,7 +34,7 @@ start_single_container() {
             -e HTTPS_PROXY=http://host.docker.internal:7890 \
             -e NO_PROXY=localhost,127.0.0.1 \
             --add-host host.docker.internal:host-gateway \
-            "$IMAGE" > /dev/null 2>&1
+            "$IMAGE"
         
         if [ $? -eq 0 ]; then
             echo "[容器$i] 容器 $CONTAINER_NAME 已启动，开始监控..."
