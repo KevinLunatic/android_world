@@ -26,4 +26,7 @@ poetry.lock
 
 build.log*
 .vscode/
-
+figure/
+eval_log/
+run_log/
+nohup.out
