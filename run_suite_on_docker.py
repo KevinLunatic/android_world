@@ -160,6 +160,13 @@ class AndroidEnvClient:
     response.raise_for_status()
     return response.json()["template"]
 
+  def get_task_max_steps(self, task_type: str, task_idx: int) -> int:
+    """Gets the maximum steps allowed for the current task."""
+    params: Params = {"task_type": task_type, "task_idx": task_idx}
+    response = requests.get(f"{self.base_url}/task/max_steps", params=params)
+    response.raise_for_status()
+    return response.json()["max_steps"]
+
   def close(self) -> None:
     """Closes the environment."""
     response = requests.post(f"{self.base_url}/close")

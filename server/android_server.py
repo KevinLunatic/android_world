@@ -213,6 +213,12 @@ async def get_task_template(
   """Gets the template or configuration details of a specific task."""
   return {"template": app_suite[task_type][task_idx].template}
 
+@task_router.get("/max_steps")
+async def get_task_max_steps(
+    task_type: str, task_idx: int, app_suite: AndroidSuite
+):
+  """Gets the maximum steps of a specific task."""
+  return {"complexity": app_suite[task_type][task_idx].complexity, "max_steps": int(10*app_suite[task_type][task_idx].complexity)}
 
 @app.post("/close")
 async def close(app_android_env: AndroidEnv):
