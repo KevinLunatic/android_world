@@ -120,6 +120,11 @@ def execute_adb_action(
 
   elif action.action_type == 'press_keyboard':
     adb_utils.press_keyboard_generic(action.keycode, env)
+  elif action.action_type == 'drag':
+    command = adb_utils.generate_drag_and_drop_command(
+        int(action.drag_start_x), int(action.drag_start_y), int(action.drag_end_x), int(action.drag_end_y), duration_ms=2000
+    )
+    adb_utils.issue_generic_request(command, env)
   elif action.action_type == 'drag_and_drop':
     if action.touch_xy is not None and action.lift_xy is not None:
       command = adb_utils.generate_drag_and_drop_command(
@@ -168,25 +173,36 @@ def execute_adb_action(
 
   elif action.action_type == 'swipe':  # Inverse of scroll.
     screen_width, screen_height = screen_size
-    mid_x, mid_y = 0.5 * screen_width, 0.5 * screen_height
+    if action.xmin and action.xmax and action.ymin and action.ymax:
+      x_min, y_min, x_max, y_max = (
+          action.xmin,
+          action.ymin,
+          action.xmax,
+          action.ymax,
+      )
+    else:
+      x_min, y_min, x_max, y_max = (0, 0, screen_width, screen_height)
+    adb_utils.issue_generic_request(['shell', 'input', 'keyevent', '111'], env) # 全屏滚动，关闭软键盘
+    
+    mid_x, mid_y = 0.5 * (x_min + x_max), 0.5 * (y_min + y_max)
     direction = action.direction
     if direction == 'down':
-      start_x, start_y = mid_x, 0
-      end_x, end_y = mid_x, screen_height
+      start_x, start_y = mid_x, y_min + (y_max - y_min) * 0.15
+      end_x, end_y = mid_x, y_max - (y_max - y_min) * 0.15
     elif direction == 'up':
-      start_x, start_y = mid_x, screen_height
-      end_x, end_y = mid_x, 0
+      start_x, start_y = mid_x, y_max - (y_max - y_min) * 0.15
+      end_x, end_y = mid_x, y_min + (y_max - y_min) * 0.15
     elif direction == 'left':
-      start_x, start_y = 0, mid_y
-      end_x, end_y = screen_width, mid_y
+      start_x, start_y = x_max - (x_max - x_min) * 0.15, mid_y
+      end_x, end_y = x_min + (x_max - x_min) * 0.15, mid_y
     elif direction == 'right':
-      start_x, start_y = screen_width, mid_y
-      end_x, end_y = 0, mid_y
+      start_x, start_y = x_min + (x_max - x_min) * 0.15, mid_y
+      end_x, end_y = x_max - (x_max - x_min) * 0.15, mid_y
     else:
       print('Invalid direction')
       return
     command = adb_utils.generate_swipe_command(
-        int(start_x), int(start_y), int(end_x), int(end_y), 500
+        int(start_x), int(start_y), int(end_x), int(end_y), duration_ms=2000
     )
     adb_utils.issue_generic_request(command, env)
 

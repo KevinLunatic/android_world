@@ -258,18 +258,44 @@ class CogAgent():
                     "action_type": action_type
                 }
             elif action_type == "swipe":
-                # TODO: android world 框架暂不支持选定区域的滑动
-                return {
-                    "action_type": action_type,
-                    "direction": action_dict["direction"],
-                }
+                if "box_2d" in action_dict and action_dict["box_2d"]:
+                    x1, y1, x2, y2 = action_dict["box_2d"][0]
+                    x1_abs = int(int(x1) * (img_width / 1000))
+                    y1_abs = int(int(y1) * (img_height / 1000))
+                    x2_abs = int(int(x2) * (img_width / 1000))
+                    y2_abs = int(int(y2) * (img_height / 1000))
+                    return {
+                        "action_type": action_type,
+                        "direction": action_dict["direction"],
+                        "xmin": x1_abs,
+                        "ymin": y1_abs,
+                        "xmax": x2_abs,
+                        "ymax": y2_abs,
+                    }
+                else:
+                    return {
+                        "action_type": action_type,
+                        "direction": action_dict["direction"],
+                    }
             elif action_type == "open_app":
                 return {
                     "action_type": action_type,
                     "app_name": action_dict["app_name"]
                 }
-            # elif action_type == "drag": # todo
-            #     pass
+            elif action_type == "drag": 
+                x1, y1 = action_dict["start_point"]
+                x2, y2 = action_dict["end_point"]
+                x1_abs = int(int(x1) * (img_width / 1000))
+                y1_abs = int(int(y1) * (img_height / 1000))
+                x2_abs = int(int(x2) * (img_width / 1000))
+                y2_abs = int(int(y2) * (img_height / 1000))
+                return {
+                    "action_type": action_type,
+                    "drag_start_x": x1_abs,
+                    "drag_start_y": y1_abs,
+                    "drag_end_x": x2_abs,
+                    "drag_end_y": y2_abs
+                }
             else:
                 raise Exception(f"Unknown action_type: {action_type}")
         except Exception as e:

@@ -35,6 +35,7 @@ STATUS = 'status'
 SWIPE = 'swipe'
 UNKNOWN = 'unknown'
 WAIT = 'wait'
+DRAG = 'drag'
 
 _ACTION_TYPES = (
     CLICK,
@@ -51,6 +52,7 @@ _ACTION_TYPES = (
     LONG_PRESS,
     ANSWER,
     UNKNOWN,
+    DRAG,
 )
 
 _SCROLL_DIRECTIONS = ('left', 'right', 'down', 'up')
@@ -64,6 +66,14 @@ TEXT = 'text'
 DIRECTION = 'direction'
 APP_NAME = 'app_name'
 GOAL_STATUS = 'goal_status'
+DRAG_START_X = 'drag_start_x'
+DRAG_START_Y = 'drag_start_y'
+DRAG_END_X = 'drag_end_x'
+DRAG_END_Y = 'drag_end_y'
+YMIN = 'ymin'
+YMAX = 'ymax'
+XMIN = 'xmin'
+XMAX = 'xmax'
 
 ACTION_KEYS = [
     ACTION_TYPE,
@@ -74,6 +84,14 @@ ACTION_KEYS = [
     DIRECTION,
     APP_NAME,
     GOAL_STATUS,
+    DRAG_START_X,
+    DRAG_START_Y,
+    DRAG_END_X,
+    DRAG_END_Y,
+    YMIN,
+    YMAX,
+    XMIN,
+    XMAX,
 ]
 
 
@@ -113,6 +131,14 @@ class JSONAction:
   app_name: Optional[str] = None
   keycode: Optional[str] = None
   clear_text: Optional[bool] = None
+  drag_start_x: Optional[int] = None
+  drag_start_y: Optional[int] = None
+  drag_end_x: Optional[int] = None
+  drag_end_y: Optional[int] = None
+  xmin: Optional[int] = None
+  xmax: Optional[int] = None
+  ymin: Optional[int] = None
+  ymax: Optional[int] = None
 
   def __post_init__(self):
     if self.action_type not in _ACTION_TYPES:
