@@ -5,7 +5,7 @@ from run_suite_on_docker import AndroidEnvClient
 import matplotlib.pyplot as plt
 from PIL import Image
 import multiprocessing
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Manager
 import queue
 from tqdm import tqdm
 import os
@@ -15,7 +15,7 @@ import argparse
 from loguru import logger as log
 import tabulate
 
-def env_run(env_id, task_queue: Queue, result_queue: Queue, eval_configs):
+def env_run(env_id, task_queue: Queue, result_queue: Queue, eval_configs, failure_count):
     """每个环境的独立工作进程"""
     # 初始化客户端
     url = f"http://localhost:{5000+env_id}"
@@ -37,9 +37,14 @@ def env_run(env_id, task_queue: Queue, result_queue: Queue, eval_configs):
             task_type, result = agent.run()
             result_queue.put((env_id, task_type, result))
         except Exception as e:
+            # TODO: 执行失败的任务不再分配给出错的环境
             log.error(f"[Env {env_id} | Task {task_id}] Error: {e}")
-            log.error(f"Put task {task_id} back to queue.")
-            task_queue.put(task_id)
+            failure_count[task_id] += 1
+            if failure_count[task_id] <= 5: # 最多重试5次
+                log.error(f"Put task {task_id} back to queue (attempt {failure_count[task_id]}/5).")
+                task_queue.put(task_id)
+            else:
+                log.error(f"Task {task_id} failed 5 times, abandoning.")
             continue
         
 def _main(eval_configs):
@@ -50,8 +55,13 @@ def _main(eval_configs):
     task_queue = Queue()
     result_queue = Queue()
     
+    # 创建共享字典跟踪失败次数
+    manager = Manager()
+    failure_count = manager.dict()
+    
     # 将所有任务放入队列
     for task_id in range(num_tasks):
+        failure_count[task_id] = 0
         task_queue.put(task_id)
 
     log.info(f"Run {num_tasks} tasks with {num_envs} environments")
@@ -59,7 +69,7 @@ def _main(eval_configs):
     # 为每个环境创建独立的工作进程
     processes = []
     for env_id in range(num_envs):
-        p = Process(target=env_run, args=(env_id, task_queue, result_queue, eval_configs))
+        p = Process(target=env_run, args=(env_id, task_queue, result_queue, eval_configs, failure_count))
         p.start()
         processes.append(p)
     
