@@ -15,15 +15,34 @@ import argparse
 from loguru import logger as log
 import tabulate
 
-def env_run(env_id, task_queue: Queue, result_queue: Queue, eval_configs, failure_count):
+def env_run(env_id, task_queue: Queue, result_queue: Queue, eval_configs, task_failure_count):
     """每个环境的独立工作进程"""
     # 初始化客户端
     url = f"http://localhost:{5000+env_id}"
     client = AndroidEnvClient(url)
+    
+    # 执行失败的 task id 列表，如果超过 5 个不同的任务都失败了，就认为该环境有问题
+    env_failed_tasks = []
+    
     while True:
-        # 从队列获取任务，超时后检查是否还有任务
+        # 从队列获取任务
         try:
-            task_id = task_queue.get(timeout=2)
+            # 若连续 5 轮没取到可执行的任务，则退出
+            retries = 5
+            task_id = None
+            while retries > 0:
+                task_id = task_queue.get(timeout=2)
+                if task_id in env_failed_tasks:
+                    # 该环境之前执行过该任务且失败，换一个任务
+                    log.info(f"Env {env_id} skipping previously failed task {task_id}.")
+                    task_queue.put(task_id)
+                    task_id = None
+                    retries -= 1
+                else:
+                    break
+            if task_id is None:
+                log.info(f"Env {env_id} failed to get tasks from queue for 5 times, exiting.")
+                break
         except queue.Empty:
             # 队列空，正常退出
             break
@@ -37,14 +56,22 @@ def env_run(env_id, task_queue: Queue, result_queue: Queue, eval_configs, failur
             task_type, result = agent.run()
             result_queue.put((env_id, task_type, result))
         except Exception as e:
-            # TODO: 执行失败的任务不再分配给出错的环境
             log.error(f"[Env {env_id} | Task {task_id}] Error: {e}")
-            failure_count[task_id] += 1
-            if failure_count[task_id] <= 5: # 最多重试5次
-                log.error(f"Put task {task_id} back to queue (attempt {failure_count[task_id]}/5).")
+
+            # 如果这个任务在不同的环境中失败了5次，就认为这个任务本身有问题，放弃执行，不再放回队列
+            task_failure_count[task_id] += 1
+            if task_failure_count[task_id] <= 5: # 最多重试5次
+                log.error(f"Put task {task_id} back to queue (attempt {task_failure_count[task_id]}/5).")
                 task_queue.put(task_id)
             else:
                 log.error(f"Task {task_id} failed 5 times, abandoning.")
+                
+            # 如果超过 5 个任务在当前环境执行失败，则认为环境有问题，退出
+            env_failed_tasks.append(task_id)
+            if len(env_failed_tasks) >= 5:
+                log.error(f"Env {env_id} has {len(env_failed_tasks)} failed tasks, exiting.")
+                break
+            
             continue
         
 def _main(eval_configs):
@@ -57,11 +84,11 @@ def _main(eval_configs):
     
     # 创建共享字典跟踪失败次数
     manager = Manager()
-    failure_count = manager.dict()
+    task_failure_count = manager.dict()
     
     # 将所有任务放入队列
     for task_id in range(num_tasks):
-        failure_count[task_id] = 0
+        task_failure_count[task_id] = 0
         task_queue.put(task_id)
 
     log.info(f"Run {num_tasks} tasks with {num_envs} environments")
@@ -69,7 +96,7 @@ def _main(eval_configs):
     # 为每个环境创建独立的工作进程
     processes = []
     for env_id in range(num_envs):
-        p = Process(target=env_run, args=(env_id, task_queue, result_queue, eval_configs, failure_count))
+        p = Process(target=env_run, args=(env_id, task_queue, result_queue, eval_configs, task_failure_count))
         p.start()
         processes.append(p)
     
