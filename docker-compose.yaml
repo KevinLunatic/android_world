@@ -1,9 +1,10 @@
 services:
   android_world:
     image: android_world:easy  # 使用指定的镜像
+    container_name: android_world_test
     privileged: true  # 对应 --privileged，给予容器特权
     ports:
-      - "5000:5000"  # 对应 -p 5000:5000，映射端口
+      - "4900:5000"  # 对应 -p 5000:5000，映射端口
     stdin_open: true  # 对应 -i，保持 stdin 打开
     tty: true  # 对应 -t，分配伪 TTY
     volumes:

@@ -3,11 +3,11 @@
 # 基础镜像和配置
 IMAGE="android_world:easy"
 BASE_PORT=5000
-NUM_CONTAINERS=30
+NUM_CONTAINERS=100
 MAX_RETRIES=5
 CHECK_INTERVAL=30  # 检查间隔（秒）
 SUCCESS_TIMEOUT=600  # 成功超时时间（秒，10分钟）
-PARALLEL_JOBS=30  # 并行作业数
+PARALLEL_JOBS=50  # 并行作业数
 
 # 启动单个容器的函数
 start_single_container() {

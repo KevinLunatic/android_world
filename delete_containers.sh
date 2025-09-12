@@ -1,10 +1,11 @@
 #!/bin/bash
 
-NUM_CONTAINERS=100
+BEGIN=51
+END=100
 
 echo "停止并删除容器..."
 
-for ((i=0; i<NUM_CONTAINERS; i++)); do
+for ((i=BEGIN; i<=END; i++)); do
   CONTAINER_NAME="android_world_$i"
   
   # 检查容器是否存在
