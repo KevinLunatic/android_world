@@ -42,8 +42,10 @@ function launch_emulator () {
   # options="@${emulator_name} -no-window -no-snapshot -noaudio -no-boot-anim -memory 2048 ${hw_accel_flag} -camera-back none  -grpc 8554"
   options="@${emulator_name} -no-window -no-snapshot -no-boot-anim -memory 2048 ${hw_accel_flag} -grpc 8554"
   if [[ "$OSTYPE" == *linux* ]]; then
-    echo "${OSTYPE}: emulator ${options} -gpu off"
-    nohup emulator $options -gpu off &
+    # echo "${OSTYPE}: emulator ${options} -gpu off"
+    # nohup emulator $options -gpu off &
+    echo "${OSTYPE}: emulator ${options} -gpu swiftshader_indirect"
+    nohup emulator $options -gpu swiftshader_indirect &
   fi
   if [[ "$OSTYPE" == *darwin* ]] || [[ "$OSTYPE" == *macos* ]]; then
     echo "${OSTYPE}: emulator ${options} -gpu swiftshader_indirect"
